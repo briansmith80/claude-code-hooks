@@ -2,7 +2,7 @@
   "_scripts": ["notify.sh"],
   "_description": "Desktop notification when Claude finishes a task or needs attention",
   "hooks": {
-    "Notification": [
+    "Stop": [
       {
         "hooks": [
           {

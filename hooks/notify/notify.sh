@@ -1,22 +1,23 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Notify: Send a desktop notification when Claude needs attention
-# Notification hook — receives JSON on stdin
+# Notify: Send a desktop notification when Claude finishes a turn
+# Stop hook — receives JSON with stop_reason, token counts on stdin
 
 input=$(cat)
 
-# Parse message via stdin to node (avoids ARG_MAX and process list exposure)
+# Parse stop reason from Stop event JSON
 message=$(printf '%s' "${input}" | node -e "
   let d = '';
   process.stdin.on('data', c => d += c);
   process.stdin.on('end', () => {
     try {
       const o = JSON.parse(d);
-      process.stdout.write(o.message || 'Claude Code needs your attention');
-    } catch { process.stdout.write('Claude Code needs your attention'); }
+      const reason = o.stop_reason || 'done';
+      process.stdout.write('Claude is ' + reason);
+    } catch { process.stdout.write('Claude finished'); }
   });
-" 2>/dev/null) || message="Claude Code needs your attention"
+" 2>/dev/null) || message="Claude finished"
 
 title="Claude Code"
 

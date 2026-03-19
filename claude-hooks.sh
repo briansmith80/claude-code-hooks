@@ -57,7 +57,7 @@ get_pack_description() {
   case "$1" in
     guard-rails)  printf "Protect sensitive files (.env, keys, credentials)" ;;
     auto-format)  printf "Auto-format files after edits (prettier, black, gofmt...)" ;;
-    notify)       printf "Desktop notification when Claude needs attention" ;;
+    notify)       printf "Desktop notification when Claude finishes a turn" ;;
     cost-log)     printf "Log token usage per turn to ~/.claude/cost-log.csv" ;;
     *)            printf "Unknown pack" ;;
   esac
@@ -340,13 +340,13 @@ fi
 
 # Determine target settings file
 if [[ "${USE_LOCAL}" == true ]]; then
-  SETTINGS_FILE=".claude/settings.local.json"
+  SETTINGS_FILE="${HOME}/.claude/settings.local.json"
 else
-  SETTINGS_FILE=".claude/settings.json"
+  SETTINGS_FILE="${HOME}/.claude/settings.json"
 fi
 
 # Ensure .claude directory and settings file exist
-mkdir -p ".claude"
+mkdir -p "${HOME}/.claude"
 if [[ ! -f "${SETTINGS_FILE}" ]]; then
   printf "{}\n" > "${SETTINGS_FILE}"
 fi

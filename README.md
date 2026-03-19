@@ -25,7 +25,7 @@ claude-hooks --list                # see available packs
 |------|-------|-------------|
 | **guard-rails** | PreToolUse | Blocks `Edit`/`Write` to `.env`, keys, credentials, SSH files, cloud configs, and more |
 | **auto-format** | PostToolUse | Runs the right formatter after every edit — prettier, black/ruff, gofmt, rustfmt, rubocop, pint, clang-format, and more |
-| **notify** | Notification | Desktop notification when Claude needs your attention (macOS, Linux, Windows) |
+| **notify** | Stop | Desktop notification when Claude finishes a turn (macOS, Linux, Windows) |
 | **cost-log** | Stop | Appends token usage per turn to `~/.claude/cost-log.csv` |
 
 ## Options
@@ -82,7 +82,7 @@ Fires **after** Claude uses `Edit` or `Write`. Detects the file extension and ru
 
 ### notify
 
-Fires on **Notification** events. Sends a native desktop notification:
+Fires when Claude **stops** (end of turn). Sends a native desktop notification:
 
 - **macOS** — `osascript` (Notification Center)
 - **Linux** — `notify-send`
