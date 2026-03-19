@@ -1,0 +1,17 @@
+{
+  "_scripts": ["protect-files.sh"],
+  "_description": "Prevent edits to sensitive files (.env, secrets, keys, credentials)",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash __HOOKS_DIR__/guard-rails/protect-files.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

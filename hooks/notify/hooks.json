@@ -1,0 +1,16 @@
+{
+  "_scripts": ["notify.sh"],
+  "_description": "Desktop notification when Claude finishes a task or needs attention",
+  "hooks": {
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash __HOOKS_DIR__/notify/notify.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

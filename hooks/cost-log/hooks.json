@@ -1,0 +1,16 @@
+{
+  "_scripts": ["log-cost.sh"],
+  "_description": "Log token usage and cost after each conversation turn to a CSV file",
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash __HOOKS_DIR__/cost-log/log-cost.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

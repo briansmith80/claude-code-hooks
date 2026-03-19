@@ -1,0 +1,18 @@
+# System
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editors
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+*.sublime-*
+
+# Node (not a node project, but just in case)
+node_modules/
+
+# claude settings
+.claude/
