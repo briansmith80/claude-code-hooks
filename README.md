@@ -88,6 +88,15 @@ Fires when Claude **stops** (end of turn). Sends a native desktop notification:
 - **Linux** — `notify-send`
 - **Windows** — PowerShell balloon notification
 
+**Configuration** — create `~/.claude-hooks/notify/config` to customize:
+
+```bash
+NOTIFY_SOUND=true            # play sound with notification (true/false)
+NOTIFY_SOUND_FILE=""         # custom .wav path (empty = system default)
+NOTIFY_MIN_DURATION=0        # skip if turn was shorter than N seconds
+NOTIFY_ONLY_UNFOCUSED=false  # only notify when terminal isn't focused
+```
+
 ### cost-log
 
 Fires when Claude **stops** (end of turn). Appends a CSV row to `~/.claude/cost-log.csv`:
