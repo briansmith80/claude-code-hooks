@@ -88,9 +88,12 @@ claude-hooks auto-format auto-lint notify   # your own combo
 
 ## How It Works
 
-1. Hook scripts are saved to `~/.claude-hooks/<pack>/`
-2. Hook configuration is merged into `~/.claude/settings.json`
-3. Claude Code reads the hooks on startup and executes them at the right time
+1. You run `claude-hooks` and pick the packs you want
+2. Hook scripts are copied to `~/.claude-hooks/<pack>/`
+3. Hook configuration is merged into `~/.claude/settings.json`
+4. Claude Code reads the hooks on next startup and runs them automatically
+
+Hooks are **global by default** — they apply to every Claude Code session. Use `--local` to scope hooks to a specific project instead.
 
 Running the same pack twice is safe — duplicates are detected and skipped.
 
@@ -118,7 +121,7 @@ Fires **before** Claude uses `Bash`. Inspects the command and blocks it if it ma
 
 - `rm -rf /`, `rm -rf ~`, `rm -rf .` (recursive force delete of critical paths)
 - `git push --force` / `git push -f` to main/master
-- `git reset --hard`
+- `git reset --hard`, `git clean -f`, `git branch -D`
 - `DROP TABLE`, `DROP DATABASE`, `TRUNCATE TABLE`
 - `mkfs.` (format filesystem)
 - `dd if=` writing to disk devices
@@ -210,6 +213,7 @@ Commit messages follow the format: `auto: Claude Code checkpoint [timestamp]`
 ```bash
 COMMIT_MSG_PREFIX="auto"       # prefix for commit messages
 COMMIT_STAGED_ONLY=false       # if true, only commit already-staged files
+COMMIT_SKIP_HOOKS=false        # if true, skip git pre-commit hooks
 ```
 
 ### session-log
@@ -220,6 +224,61 @@ Fires when Claude **stops** (end of turn). Appends a markdown entry to `~/.claud
 - Stop reason
 - Token usage (input, output, cache read/write)
 - Working directory
+
+## Uninstall
+
+**Remove all hooks:**
+
+```bash
+# Delete hook scripts
+rm -rf ~/.claude-hooks
+
+# Remove hooks config from settings.json
+node -e "
+  const fs = require('fs');
+  const f = process.env.HOME + '/.claude/settings.json';
+  try {
+    const s = JSON.parse(fs.readFileSync(f, 'utf8'));
+    delete s.hooks;
+    fs.writeFileSync(f, JSON.stringify(s, null, 2) + '\n');
+    console.log('Hooks removed from ' + f);
+  } catch(e) { console.error(e.message); }
+"
+```
+
+**Remove a single pack:** Open `~/.claude/settings.json`, find the hook entry for the pack you want to remove, and delete it. Then delete the pack's script folder:
+
+```bash
+rm -rf ~/.claude-hooks/<pack-name>
+```
+
+**Remove the CLI alias:** Delete the `# claude-code-hooks` line and the alias below it from your `~/.bashrc` or `~/.zshrc`.
+
+## FAQ
+
+**Do I need all the packs?**
+No. Every pack is independent. Install one, three, or all nine — whatever fits your workflow. You can always add or remove packs later.
+
+**Will hooks slow down Claude?**
+Minimally. Safety hooks (guard-rails, dangerous-cmd) add a few milliseconds per tool call. Code quality hooks (auto-format, auto-lint) run fast formatters/linters. The auto-test pack runs your test suite, so speed depends on your project — consider it for smaller projects or use the cost-log pack instead if you want lightweight tracking.
+
+**Do hooks work in VS Code / JetBrains?**
+Yes. Hooks are part of Claude Code itself, not the IDE. They work anywhere Claude Code runs — terminal, VS Code, JetBrains, or any IDE with Claude Code integration.
+
+**Can I customize which files are protected?**
+The guard-rails pack has a built-in list of sensitive patterns. For custom rules, you can edit `~/.claude-hooks/guard-rails/protect-files.sh` directly — it's just a bash script.
+
+**What happens if a formatter or linter isn't installed?**
+Nothing. The auto-format and auto-lint packs check for each tool before running it. If prettier isn't installed, the hook silently skips. No errors, no blocking.
+
+**Does auto-commit bypass my git hooks?**
+No, not by default. Set `COMMIT_SKIP_HOOKS=true` in `~/.claude-hooks/auto-commit/config` if you want to skip pre-commit hooks for auto-commits.
+
+**Where do logs go?**
+- **cost-log** writes to `~/.claude/cost-log.csv`
+- **session-log** writes to `~/.claude/session-log.md`
+
+Both are append-only. Open them in any text editor or spreadsheet app.
 
 ## Requirements
 
