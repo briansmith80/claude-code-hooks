@@ -1,6 +1,6 @@
 {
   "_scripts": ["block-dangerous.sh"],
-  "_description": "Block destructive bash commands (rm -rf, force push, drop table, etc.)",
+  "_description": "Block destructive bash commands (rm -rf, force push, drop table)",
   "hooks": {
     "PreToolUse": [
       {

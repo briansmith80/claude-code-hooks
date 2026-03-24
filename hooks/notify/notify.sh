@@ -14,8 +14,24 @@ NOTIFY_ONLY_UNFOCUSED=false
 
 CONFIG_FILE="${HOME}/.claude-hooks/notify/config"
 if [[ -f "${CONFIG_FILE}" ]]; then
-  # shellcheck source=/dev/null
-  source "${CONFIG_FILE}"
+  while IFS='=' read -r key value; do
+    # Skip comments and blank lines
+    key="${key%%#*}"
+    key="${key// /}"
+    [[ -z "${key}" ]] && continue
+    # Strip surrounding quotes from value
+    value="${value#"${value%%[![:space:]]*}"}"
+    value="${value%"${value##*[![:space:]]}"}"
+    value="${value#\"}"
+    value="${value%\"}"
+    value="${value#\'}"
+    value="${value%\'}"
+    case "${key}" in
+      NOTIFY_SOUND|NOTIFY_SOUND_FILE|NOTIFY_MIN_DURATION|NOTIFY_ONLY_UNFOCUSED)
+        printf -v "${key}" '%s' "${value}"
+        ;;
+    esac
+  done < "${CONFIG_FILE}"
 fi
 
 # ---------------------------------------------------------------------------

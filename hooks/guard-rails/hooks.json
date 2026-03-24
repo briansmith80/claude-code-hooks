@@ -1,6 +1,6 @@
 {
   "_scripts": ["protect-files.sh"],
-  "_description": "Prevent edits to sensitive files (.env, secrets, keys, credentials)",
+  "_description": "Protect sensitive files (.env, keys, credentials)",
   "hooks": {
     "PreToolUse": [
       {

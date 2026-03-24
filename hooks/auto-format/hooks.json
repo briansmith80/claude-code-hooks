@@ -1,6 +1,6 @@
 {
   "_scripts": ["format-on-save.sh"],
-  "_description": "Auto-format files after Claude edits them (prettier, black, gofmt, etc.)",
+  "_description": "Auto-format files after edits (prettier, black, gofmt...)",
   "hooks": {
     "PostToolUse": [
       {

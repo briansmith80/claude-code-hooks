@@ -29,11 +29,17 @@ block() {
 # Normalize: collapse whitespace for reliable matching
 normalized=$(printf '%s' "${cmd}" | tr -s '[:space:]' ' ')
 
-# Convert to lowercase for case-insensitive checks
-lower="${normalized,,}"
+# Convert to lowercase for case-insensitive checks (bash 3.2 compatible)
+lower=$(printf '%s' "${normalized}" | tr '[:upper:]' '[:lower:]')
+
+# Fast-path: single grep to check if command might be dangerous
+if ! printf '%s' "${lower}" | grep -qE 'rm\s.*-.*r.*f|git\s+(push|reset|clean|branch)|drop\s+(table|database)|truncate\s+table|mkfs\.|dd\s+.*of=.*/dev/|chmod\s.*777|:\(\)\{|>\s*/dev/(sd|hd|nvme)|kill\s+-9\s+1'; then
+  printf '{"decision":"allow"}\n'
+  exit 0
+fi
 
 # --- rm -rf targeting root, home, or current directory ---
-if printf '%s' "${lower}" | grep -qE 'rm\s+(-[a-z]*r[a-z]*\s+-[a-z]*f[a-z]*|-[a-z]*f[a-z]*\s+-[a-z]*r[a-z]*|-[a-z]*rf[a-z]*|-[a-z]*fr[a-z]*)\s+(/|~|\.)(\s|$|;|\|)'; then
+if printf '%s' "${lower}" | grep -qE '(^|\s|/)(rm|/bin/rm|/usr/bin/rm)\s+(-[a-z]*r[a-z]*\s+-[a-z]*f[a-z]*|-[a-z]*f[a-z]*\s+-[a-z]*r[a-z]*|-[a-z]*rf[a-z]*|-[a-z]*fr[a-z]*)\s+(/|~|\.)(\s|$|;|\|)'; then
   block "Blocked recursive force-delete of root, home, or current directory."
 fi
 
@@ -45,6 +51,16 @@ fi
 # --- git reset --hard ---
 if printf '%s' "${lower}" | grep -qE 'git\s+reset\s+--hard'; then
   block "Blocked git reset --hard — this discards uncommitted changes."
+fi
+
+# --- git clean -f (destructive: removes untracked files) ---
+if printf '%s' "${lower}" | grep -qE 'git\s+clean\s+.*-[a-z]*f'; then
+  block "Blocked git clean -f — this permanently removes untracked files."
+fi
+
+# --- git branch -D (force delete branch) ---
+if printf '%s' "${lower}" | grep -qE 'git\s+branch\s+.*-D'; then
+  block "Blocked git branch -D — use -d for safe branch deletion."
 fi
 
 # --- SQL destructive commands (DROP TABLE, DROP DATABASE, TRUNCATE TABLE) ---

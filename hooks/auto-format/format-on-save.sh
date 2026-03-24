@@ -26,6 +26,7 @@ safe_path="${file_path}"
 [[ "${safe_path}" == -* ]] && safe_path="./${safe_path}"
 
 ext="${file_path##*.}"
+ext=$(printf '%s' "${ext}" | tr '[:upper:]' '[:lower:]')
 
 case "${ext}" in
   js|jsx|ts|tsx|css|scss|less|json|md|mdx|html|yaml|yml|vue|svelte|graphql)

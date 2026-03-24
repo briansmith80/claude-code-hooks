@@ -75,7 +75,7 @@ claude-hooks auto-format auto-lint notify   # your own combo
 | Clean code | `claude-hooks auto-format auto-lint` |
 | Full CI feel | `claude-hooks auto-format auto-lint auto-test` |
 | Stay informed | `claude-hooks notify cost-log` |
-| Everything | `claude-hooks guard-rails dangerous-cmd auto-format auto-lint auto-test notify cost-log session-log` |
+| Everything | `claude-hooks guard-rails dangerous-cmd auto-format auto-lint auto-test notify cost-log auto-commit session-log` |
 
 ## Options
 

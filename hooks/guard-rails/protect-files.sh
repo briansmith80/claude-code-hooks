@@ -87,4 +87,5 @@ case "${resolved}" in
 esac
 
 shopt -u nocasematch
+printf '{"decision":"allow"}\n'
 exit 0

@@ -10,12 +10,29 @@ input=$(cat)
 # ------- Configuration defaults -------
 COMMIT_MSG_PREFIX="auto"
 COMMIT_STAGED_ONLY=false
+COMMIT_SKIP_HOOKS=false
 
 # Load user config if present
-config_file="${HOME}/.claude-hooks/auto-commit/config"
-if [[ -f "${config_file}" ]]; then
-  # shellcheck source=/dev/null
-  source "${config_file}"
+CONFIG_FILE="${HOME}/.claude-hooks/auto-commit/config"
+if [[ -f "${CONFIG_FILE}" ]]; then
+  while IFS='=' read -r key value; do
+    # Skip comments and blank lines
+    key="${key%%#*}"
+    key="${key// /}"
+    [[ -z "${key}" ]] && continue
+    # Strip surrounding quotes from value
+    value="${value#"${value%%[![:space:]]*}"}"
+    value="${value%"${value##*[![:space:]]}"}"
+    value="${value#\"}"
+    value="${value%\"}"
+    value="${value#\'}"
+    value="${value%\'}"
+    case "${key}" in
+      COMMIT_MSG_PREFIX|COMMIT_STAGED_ONLY|COMMIT_SKIP_HOOKS)
+        printf -v "${key}" '%s' "${value}"
+        ;;
+    esac
+  done < "${CONFIG_FILE}"
 fi
 
 # ------- Guard: must be inside a git repo -------
@@ -40,6 +57,10 @@ timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null) || timestamp="unknown"
 commit_msg="${COMMIT_MSG_PREFIX}: Claude Code checkpoint [${timestamp}]"
 
 # ------- Commit -------
-git commit -m "${commit_msg}" --no-verify >/dev/null 2>&1 || true
+commit_flags=()
+if [[ "${COMMIT_SKIP_HOOKS}" == "true" ]]; then
+  commit_flags+=(--no-verify)
+fi
+git commit -m "${commit_msg}" "${commit_flags[@]}" >/dev/null 2>&1 || true
 
 exit 0

@@ -23,6 +23,7 @@ file_path=$(printf '%s' "${input}" | node -e "
 
 # Skip non-source files — no point running tests for docs, configs, etc.
 ext="${file_path##*.}"
+ext=$(printf '%s' "${ext}" | tr '[:upper:]' '[:lower:]')
 case "${ext}" in
   md|txt|json|yaml|yml|toml|ini|cfg|conf|lock|log|csv|svg|png|jpg|jpeg|gif|ico|woff|woff2|ttf|eot)
     exit 0
@@ -43,68 +44,79 @@ done
 [[ "${project_dir}" == "/" ]] && exit 0
 
 # Detect project type and choose test command
-test_cmd=""
+test_cmd=()
 
 if [[ -f "${project_dir}/package.json" ]]; then
   # Node.js — detect test runner from package.json
   runner=$(node -e "
     const fs = require('fs');
     try {
-      const pkg = JSON.parse(fs.readFileSync('${project_dir}/package.json', 'utf8'));
+      const pkg = JSON.parse(fs.readFileSync(process.argv[1], 'utf8'));
       const all = Object.assign({}, pkg.devDependencies || {}, pkg.dependencies || {});
       if (all['vitest']) { process.stdout.write('vitest'); }
       else if (all['jest']) { process.stdout.write('jest'); }
       else { process.stdout.write('npm'); }
     } catch { process.stdout.write('npm'); }
-  " 2>/dev/null) || runner="npm"
+  " "${project_dir}/package.json" 2>/dev/null) || runner="npm"
 
   case "${runner}" in
-    vitest) test_cmd="npx vitest run" ;;
-    jest)   test_cmd="npx jest" ;;
-    *)      test_cmd="npm test" ;;
+    vitest) test_cmd=(npx vitest run) ;;
+    jest)   test_cmd=(npx jest) ;;
+    *)      test_cmd=(npm test) ;;
   esac
 
 elif [[ -f "${project_dir}/pytest.ini" || -f "${project_dir}/pyproject.toml" || -f "${project_dir}/setup.py" ]]; then
-  test_cmd="pytest"
+  test_cmd=(pytest)
 
 elif [[ -f "${project_dir}/Gemfile" ]]; then
   if [[ -f "${project_dir}/bin/rails" ]]; then
-    test_cmd="bundle exec rails test"
+    test_cmd=(bundle exec rails test)
   else
-    test_cmd="bundle exec rspec"
+    test_cmd=(bundle exec rspec)
   fi
 
 elif [[ -f "${project_dir}/go.mod" ]]; then
-  test_cmd="go test ./..."
+  test_cmd=(go test ./...)
 
 elif [[ -f "${project_dir}/Cargo.toml" ]]; then
-  test_cmd="cargo test"
+  test_cmd=(cargo test)
 
 elif [[ -f "${project_dir}/composer.json" ]]; then
   if [[ -f "${project_dir}/artisan" ]]; then
-    test_cmd="php artisan test"
+    test_cmd=(php artisan test)
   else
-    test_cmd="./vendor/bin/phpunit"
+    test_cmd=(./vendor/bin/phpunit)
   fi
 
 elif [[ -f "${project_dir}/mix.exs" ]]; then
-  test_cmd="mix test"
+  test_cmd=(mix test)
 fi
 
-[[ -z "${test_cmd}" ]] && exit 0
+[[ ${#test_cmd[@]} -eq 0 ]] && exit 0
 
-# Run tests in the background with a timeout to avoid blocking Claude
+# Run tests with a timeout to avoid blocking Claude
 # Capture output so it appears in the hook result
 TIMEOUT_SECONDS=120
 
+run_with_timeout() {
+  local secs="$1"; shift
+  if command -v timeout &>/dev/null; then
+    timeout "${secs}" "$@"
+  elif command -v gtimeout &>/dev/null; then
+    gtimeout "${secs}" "$@"
+  else
+    "$@"
+  fi
+}
+
 output=$(
   cd "${project_dir}" && \
-  timeout "${TIMEOUT_SECONDS}" bash -c "${test_cmd}" 2>&1 \
+  run_with_timeout "${TIMEOUT_SECONDS}" "${test_cmd[@]}" 2>&1 \
   || true
 )
 
 if [[ -n "${output}" ]]; then
-  printf "[auto-test] ran: %s\n\n%s\n" "${test_cmd}" "${output}"
+  printf "[auto-test] ran: %s\n\n%s\n" "${test_cmd[*]}" "${output}"
 fi
 
 exit 0

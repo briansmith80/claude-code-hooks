@@ -1,101 +1,89 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# lint-on-save.sh — Run the appropriate linter after Claude edits a file.
-# Receives PostToolUse JSON on stdin with tool_input containing the file path.
+# Auto-Lint: Run the appropriate linter after Claude edits a file
+# PostToolUse hook for Edit|Write — receives JSON on stdin
 
-INPUT="$(cat)"
+input=$(cat)
 
-# Extract the file path from tool_input using node
-FILE_PATH="$(printf '%s' "${INPUT}" | node -e "
-  const chunks = [];
-  process.stdin.on('data', c => chunks.push(c));
+# Parse file_path via stdin to node (avoids ARG_MAX and process list exposure)
+file_path=$(printf '%s' "${input}" | node -e "
+  let d = '';
+  process.stdin.on('data', c => d += c);
   process.stdin.on('end', () => {
     try {
-      const data = JSON.parse(chunks.join(''));
-      const ti = data.tool_input || {};
-      const fp = ti.file_path || ti.path || '';
-      process.stdout.write(fp);
-    } catch {
-      process.exit(0);
-    }
+      const o = JSON.parse(d);
+      process.stdout.write((o.tool_input || {}).file_path || '');
+    } catch { process.stdout.write(''); }
   });
-")"
+" 2>/dev/null) || exit 0
 
-# Exit silently if no file path was found
-if [[ -z "${FILE_PATH}" ]]; then
-  exit 0
-fi
+[[ -z "${file_path}" ]] && exit 0
+[[ ! -f "${file_path}" ]] && exit 0
 
-# Extract extension (lowercase)
-EXT="${FILE_PATH##*.}"
-EXT="$(printf '%s' "${EXT}" | tr '[:upper:]' '[:lower:]')"
+# Prevent option injection: ensure path doesn't start with a dash
+safe_path="${file_path}"
+[[ "${safe_path}" == -* ]] && safe_path="./${safe_path}"
+
+ext="${file_path##*.}"
+ext=$(printf '%s' "${ext}" | tr '[:upper:]' '[:lower:]')
 
 # Determine linter command based on file extension
-LINT_CMD=""
+lint_cmd=()
 
-case "${EXT}" in
+case "${ext}" in
   js|jsx|ts|tsx)
-    if command -v eslint &>/dev/null; then
-      LINT_CMD="eslint --fix"
-    fi
+    command -v eslint &>/dev/null && lint_cmd=(eslint --fix --)
     ;;
   py)
     if command -v ruff &>/dev/null; then
-      LINT_CMD="ruff check --fix"
+      lint_cmd=(ruff check --fix --)
     elif command -v flake8 &>/dev/null; then
-      LINT_CMD="flake8"
+      lint_cmd=(flake8 --)
     fi
     ;;
   rb|rake|gemspec)
-    if command -v rubocop &>/dev/null; then
-      LINT_CMD="rubocop -A"
-    fi
+    command -v rubocop &>/dev/null && lint_cmd=(rubocop -A --)
     ;;
   go)
-    if command -v golangci-lint &>/dev/null; then
-      LINT_CMD="golangci-lint run"
-    fi
+    command -v golangci-lint &>/dev/null && lint_cmd=(golangci-lint run)
     ;;
   rs)
-    if command -v cargo &>/dev/null; then
-      LINT_CMD="cargo clippy"
-    fi
+    command -v cargo &>/dev/null && lint_cmd=(cargo clippy -- -W warnings)
     ;;
   php)
-    if [[ -x "./vendor/bin/phpstan" ]]; then
-      LINT_CMD="./vendor/bin/phpstan analyse"
+    if [[ -x ./vendor/bin/phpstan ]]; then
+      lint_cmd=(./vendor/bin/phpstan analyse --)
     elif command -v phpstan &>/dev/null; then
-      LINT_CMD="phpstan analyse"
+      lint_cmd=(phpstan analyse --)
     fi
     ;;
   sh|bash)
-    if command -v shellcheck &>/dev/null; then
-      LINT_CMD="shellcheck"
-    fi
+    command -v shellcheck &>/dev/null && lint_cmd=(shellcheck --)
     ;;
-  c|cpp|cc|h|hpp)
-    if command -v cppcheck &>/dev/null; then
-      LINT_CMD="cppcheck"
-    fi
-    ;;
-  *)
-    # No linter for this extension — exit silently
-    exit 0
+  c|cpp|cc|cxx|h|hpp)
+    command -v cppcheck &>/dev/null && lint_cmd=(cppcheck --)
     ;;
 esac
 
-# Exit silently if no linter is installed
-if [[ -z "${LINT_CMD}" ]]; then
-  exit 0
-fi
+[[ ${#lint_cmd[@]} -eq 0 ]] && exit 0
 
-# Run the linter capturing stderr; always exit 0 so we never block Claude
-LINT_OUTPUT=""
-LINT_OUTPUT="$(bash -c "${LINT_CMD} \"${FILE_PATH}\"" 2>&1)" || true
+# Run the linter; always exit 0 so we never block Claude
+# Go and Rust linters handle paths differently — no safe_path argument
+case "${ext}" in
+  go)
+    lint_output=$("${lint_cmd[@]}" "${safe_path}" 2>&1) || true
+    ;;
+  rs)
+    lint_output=$("${lint_cmd[@]}" 2>&1) || true
+    ;;
+  *)
+    lint_output=$("${lint_cmd[@]}" "${safe_path}" 2>&1) || true
+    ;;
+esac
 
-if [[ -n "${LINT_OUTPUT}" ]]; then
-  printf '%s\n' "${LINT_OUTPUT}"
+if [[ -n "${lint_output}" ]]; then
+  printf '%s\n' "${lint_output}"
 fi
 
 exit 0
