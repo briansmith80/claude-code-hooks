@@ -92,7 +92,7 @@ fi
 
 # Run the linter capturing stderr; always exit 0 so we never block Claude
 LINT_OUTPUT=""
-LINT_OUTPUT="$(${LINT_CMD} "${FILE_PATH}" 2>&1)" || true
+LINT_OUTPUT="$(bash -c "${LINT_CMD} \"${FILE_PATH}\"" 2>&1)" || true
 
 if [[ -n "${LINT_OUTPUT}" ]]; then
   printf '%s\n' "${LINT_OUTPUT}"

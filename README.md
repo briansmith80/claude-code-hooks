@@ -14,7 +14,7 @@ Claude Code hooks let you run scripts before or after Claude takes action — bu
 - **auto-commit** — Every Claude turn gets checkpointed as a git commit. Easy to review, easy to roll back.
 - **session-log** — A markdown diary of every Claude turn — timestamps, token counts, and stop reasons. Perfect for auditing and retrospectives.
 
-Each pack is a single command to install. No config files to write, no JSON to hand-edit — just pick what you need and go.
+Every pack is independent — install only the ones you want. Mix and match to build your ideal workflow. No config files to write, no JSON to hand-edit.
 
 ## Install
 
@@ -33,19 +33,49 @@ claude-hooks guard-rails notify    # install multiple packs
 claude-hooks --list                # see available packs
 ```
 
-## Available Packs
+## Pack Library
+
+Install one pack, a few, or all of them — each works independently.
+
+```bash
+claude-hooks guard-rails                    # just one
+claude-hooks guard-rails dangerous-cmd      # a few
+claude-hooks auto-format auto-lint notify   # your own combo
+```
+
+### Safety
 
 | Pack | Event | What It Does |
 |------|-------|-------------|
 | **guard-rails** | PreToolUse | Blocks `Edit`/`Write` to `.env`, keys, credentials, SSH files, cloud configs, and more |
 | **dangerous-cmd** | PreToolUse | Blocks destructive bash commands — `rm -rf`, force push, `DROP TABLE`, and more |
+
+### Code Quality
+
+| Pack | Event | What It Does |
+|------|-------|-------------|
 | **auto-format** | PostToolUse | Runs the right formatter after every edit — prettier, black/ruff, gofmt, rustfmt, rubocop, pint, clang-format, and more |
 | **auto-lint** | PostToolUse | Runs the right linter after every edit — eslint, ruff, rubocop, shellcheck, and more |
 | **auto-test** | PostToolUse | Runs the project's test suite after code changes |
+
+### Awareness
+
+| Pack | Event | What It Does |
+|------|-------|-------------|
 | **notify** | Stop | Desktop notification when Claude finishes a turn (macOS, Linux, Windows) |
 | **cost-log** | Stop | Appends token usage per turn to `~/.claude/cost-log.csv` |
 | **auto-commit** | Stop | Auto-commits changes after each Claude turn |
 | **session-log** | Stop | Appends a markdown summary of each turn to `~/.claude/session-log.md` |
+
+### Suggested Combos
+
+| Use Case | Command |
+|----------|---------|
+| Safety first | `claude-hooks guard-rails dangerous-cmd` |
+| Clean code | `claude-hooks auto-format auto-lint` |
+| Full CI feel | `claude-hooks auto-format auto-lint auto-test` |
+| Stay informed | `claude-hooks notify cost-log` |
+| Everything | `claude-hooks guard-rails dangerous-cmd auto-format auto-lint auto-test notify cost-log session-log` |
 
 ## Options
 

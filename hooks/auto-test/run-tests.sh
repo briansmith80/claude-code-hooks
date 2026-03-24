@@ -31,7 +31,7 @@ esac
 
 # Find the project root by walking up from the edited file
 project_dir=$(dirname "${file_path}")
-while [[ "${project_dir}" != "/" ]]; do
+while [[ "${project_dir}" != "/" && "${project_dir}" != "${project_dir%/*}" ]]; do
   # Stop if we find a common project root indicator
   for marker in package.json pyproject.toml setup.py go.mod Cargo.toml composer.json mix.exs Gemfile; do
     [[ -f "${project_dir}/${marker}" ]] && break 2
@@ -99,7 +99,7 @@ TIMEOUT_SECONDS=120
 
 output=$(
   cd "${project_dir}" && \
-  timeout "${TIMEOUT_SECONDS}" ${test_cmd} 2>&1 \
+  timeout "${TIMEOUT_SECONDS}" bash -c "${test_cmd}" 2>&1 \
   || true
 )
 
