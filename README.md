@@ -5,9 +5,14 @@
 Claude Code hooks let you run scripts before or after Claude takes action — but writing them from scratch is tedious. `claude-code-hooks` gives you production-ready packs you can install in seconds:
 
 - **guard-rails** — Automatically blocks Claude from editing `.env` files, API keys, SSH keys, and other secrets. Sleep easier knowing your credentials are protected.
+- **dangerous-cmd** — Catches destructive bash commands before they run. No more accidental `rm -rf`, force pushes, or dropped tables.
 - **auto-format** — Every file Claude touches gets formatted with the right tool. Prettier for JS/TS, Black for Python, gofmt for Go, and 10+ more. No more style drift in AI-generated code.
+- **auto-lint** — Linting runs automatically after every edit. ESLint, Ruff, RuboCop, ShellCheck, and more — Claude sees the errors and can fix them immediately.
+- **auto-test** — Tests run after code changes so regressions get caught in real time. Supports npm, pytest, RSpec, Go, Cargo, PHPUnit, and Mix.
 - **notify** — Get a desktop notification the moment Claude finishes working. Stop watching the terminal and multitask with confidence.
 - **cost-log** — Track every token Claude spends in a simple CSV. Know exactly where your usage goes across sessions and projects.
+- **auto-commit** — Every Claude turn gets checkpointed as a git commit. Easy to review, easy to roll back.
+- **session-log** — A markdown diary of every Claude turn — timestamps, token counts, and stop reasons. Perfect for auditing and retrospectives.
 
 Each pack is a single command to install. No config files to write, no JSON to hand-edit — just pick what you need and go.
 
@@ -33,9 +38,14 @@ claude-hooks --list                # see available packs
 | Pack | Event | What It Does |
 |------|-------|-------------|
 | **guard-rails** | PreToolUse | Blocks `Edit`/`Write` to `.env`, keys, credentials, SSH files, cloud configs, and more |
+| **dangerous-cmd** | PreToolUse | Blocks destructive bash commands — `rm -rf`, force push, `DROP TABLE`, and more |
 | **auto-format** | PostToolUse | Runs the right formatter after every edit — prettier, black/ruff, gofmt, rustfmt, rubocop, pint, clang-format, and more |
+| **auto-lint** | PostToolUse | Runs the right linter after every edit — eslint, ruff, rubocop, shellcheck, and more |
+| **auto-test** | PostToolUse | Runs the project's test suite after code changes |
 | **notify** | Stop | Desktop notification when Claude finishes a turn (macOS, Linux, Windows) |
 | **cost-log** | Stop | Appends token usage per turn to `~/.claude/cost-log.csv` |
+| **auto-commit** | Stop | Auto-commits changes after each Claude turn |
+| **session-log** | Stop | Appends a markdown summary of each turn to `~/.claude/session-log.md` |
 
 ## Options
 
@@ -72,6 +82,18 @@ Matching is case-insensitive and resolves symlinks when possible.
 
 > **Note:** guard-rails protects against `Edit` and `Write` tool calls only. It does not intercept `Bash` commands like `cat .env` or `cp .env`. For full protection, also add sensitive paths to `permissions.deny` in your settings.
 
+### dangerous-cmd
+
+Fires **before** Claude uses `Bash`. Inspects the command and blocks it if it matches dangerous patterns:
+
+- `rm -rf /`, `rm -rf ~`, `rm -rf .` (recursive force delete of critical paths)
+- `git push --force` / `git push -f` to main/master
+- `git reset --hard`
+- `DROP TABLE`, `DROP DATABASE`, `TRUNCATE TABLE`
+- `mkfs.` (format filesystem)
+- `dd if=` writing to disk devices
+- `chmod 777`, fork bombs, device writes
+
 ### auto-format
 
 Fires **after** Claude uses `Edit` or `Write`. Detects the file extension and runs the appropriate formatter if it's installed:
@@ -88,6 +110,39 @@ Fires **after** Claude uses `Edit` or `Write`. Detects the file extension and ru
 | c, cpp, cc, cxx, h, hpp | `clang-format` |
 | dart | `dart format` |
 | tf, tfvars | `terraform fmt` |
+
+### auto-lint
+
+Fires **after** Claude uses `Edit` or `Write`. Detects the file extension and runs the appropriate linter if it's installed:
+
+| Extension | Linter |
+|-----------|--------|
+| js, jsx, ts, tsx | `eslint --fix` |
+| py | `ruff check --fix` or `flake8` |
+| rb, rake, gemspec | `rubocop -A` |
+| go | `golangci-lint run` |
+| rs | `cargo clippy` |
+| php | `phpstan analyse` |
+| sh, bash | `shellcheck` |
+| c, cpp, cc, h, hpp | `cppcheck` |
+
+Lint output is reported back to Claude so it can fix issues automatically.
+
+### auto-test
+
+Fires **after** Claude uses `Edit` or `Write`. Detects the project type and runs the appropriate test runner:
+
+| Config File | Test Runner |
+|-------------|-------------|
+| `package.json` | `npm test` (detects vitest/jest) |
+| `pyproject.toml` / `pytest.ini` | `pytest` |
+| `Gemfile` | `bundle exec rspec` or `rails test` |
+| `go.mod` | `go test ./...` |
+| `Cargo.toml` | `cargo test` |
+| `composer.json` | `phpunit` or `php artisan test` |
+| `mix.exs` | `mix test` |
+
+Skips non-source files (markdown, config, etc.). Test output is reported back to Claude.
 
 ### notify
 
@@ -113,6 +168,28 @@ Fires when Claude **stops** (end of turn). Appends a CSV row to `~/.claude/cost-
 ```
 timestamp,stop_reason,input_tokens,output_tokens,cache_read,cache_write
 ```
+
+### auto-commit
+
+Fires when Claude **stops** (end of turn). Automatically commits any uncommitted changes as a checkpoint.
+
+Commit messages follow the format: `auto: Claude Code checkpoint [timestamp]`
+
+**Configuration** — create `~/.claude-hooks/auto-commit/config` to customize:
+
+```bash
+COMMIT_MSG_PREFIX="auto"       # prefix for commit messages
+COMMIT_STAGED_ONLY=false       # if true, only commit already-staged files
+```
+
+### session-log
+
+Fires when Claude **stops** (end of turn). Appends a markdown entry to `~/.claude/session-log.md` with:
+
+- Timestamp and project name
+- Stop reason
+- Token usage (input, output, cache read/write)
+- Working directory
 
 ## Requirements
 

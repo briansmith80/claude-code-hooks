@@ -1,0 +1,17 @@
+{
+  "_scripts": ["run-tests.sh"],
+  "_description": "Run relevant tests after code changes",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash __HOOKS_DIR__/auto-test/run-tests.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

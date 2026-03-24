@@ -1,0 +1,17 @@
+{
+  "_scripts": ["lint-on-save.sh"],
+  "_description": "Run the appropriate linter after every edit",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash __HOOKS_DIR__/auto-lint/lint-on-save.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

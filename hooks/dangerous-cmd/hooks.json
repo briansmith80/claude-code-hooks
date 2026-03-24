@@ -1,0 +1,17 @@
+{
+  "_scripts": ["block-dangerous.sh"],
+  "_description": "Block destructive bash commands (rm -rf, force push, drop table, etc.)",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash __HOOKS_DIR__/dangerous-cmd/block-dangerous.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

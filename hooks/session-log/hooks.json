@@ -1,0 +1,16 @@
+{
+  "_scripts": ["log-session.sh"],
+  "_description": "Log a markdown summary of each session turn",
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash __HOOKS_DIR__/session-log/log-session.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

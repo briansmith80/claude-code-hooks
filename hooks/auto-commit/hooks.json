@@ -1,0 +1,16 @@
+{
+  "_scripts": ["commit-on-stop.sh"],
+  "_description": "Auto-commit changes after each Claude turn",
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash __HOOKS_DIR__/auto-commit/commit-on-stop.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

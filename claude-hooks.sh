@@ -14,7 +14,7 @@ REPO_URL="https://raw.githubusercontent.com/briansmith80/claude-code-hooks/main"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Available packs (order matters for display)
-PACKS=("guard-rails" "auto-format" "notify" "cost-log")
+PACKS=("guard-rails" "dangerous-cmd" "auto-format" "auto-lint" "auto-test" "notify" "cost-log" "auto-commit" "session-log")
 
 # ---------------------------------------------------------------------------
 # Colors
@@ -55,11 +55,16 @@ fetch_url() {
 # ---------------------------------------------------------------------------
 get_pack_description() {
   case "$1" in
-    guard-rails)  printf "Protect sensitive files (.env, keys, credentials)" ;;
-    auto-format)  printf "Auto-format files after edits (prettier, black, gofmt...)" ;;
-    notify)       printf "Desktop notification when Claude finishes a turn" ;;
-    cost-log)     printf "Log token usage per turn to ~/.claude/cost-log.csv" ;;
-    *)            printf "Unknown pack" ;;
+    guard-rails)    printf "Protect sensitive files (.env, keys, credentials)" ;;
+    dangerous-cmd)  printf "Block destructive bash commands (rm -rf, force push, drop table)" ;;
+    auto-format)    printf "Auto-format files after edits (prettier, black, gofmt...)" ;;
+    auto-lint)      printf "Run the appropriate linter after every edit" ;;
+    auto-test)      printf "Run relevant tests after code changes" ;;
+    notify)         printf "Desktop notification when Claude finishes a turn" ;;
+    cost-log)       printf "Log token usage per turn to ~/.claude/cost-log.csv" ;;
+    auto-commit)    printf "Auto-commit changes after each Claude turn" ;;
+    session-log)    printf "Log a markdown summary of each session turn" ;;
+    *)              printf "Unknown pack" ;;
   esac
 }
 
