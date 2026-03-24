@@ -1,6 +1,15 @@
 # claude-code-hooks
 
-Pre-built hook packs for [Claude Code](https://docs.anthropic.com/en/docs/claude-code). One command to install guard-rails, auto-formatting, notifications, and cost logging.
+**Drop-in hook packs that make Claude Code safer, cleaner, and easier to manage.**
+
+Claude Code hooks let you run scripts before or after Claude takes action — but writing them from scratch is tedious. `claude-code-hooks` gives you production-ready packs you can install in seconds:
+
+- **guard-rails** — Automatically blocks Claude from editing `.env` files, API keys, SSH keys, and other secrets. Sleep easier knowing your credentials are protected.
+- **auto-format** — Every file Claude touches gets formatted with the right tool. Prettier for JS/TS, Black for Python, gofmt for Go, and 10+ more. No more style drift in AI-generated code.
+- **notify** — Get a desktop notification the moment Claude finishes working. Stop watching the terminal and multitask with confidence.
+- **cost-log** — Track every token Claude spends in a simple CSV. Know exactly where your usage goes across sessions and projects.
+
+Each pack is a single command to install. No config files to write, no JSON to hand-edit — just pick what you need and go.
 
 ## Install
 
