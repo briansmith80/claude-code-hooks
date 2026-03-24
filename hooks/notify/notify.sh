@@ -24,7 +24,7 @@ fi
 input=$(cat)
 
 # Parse stop reason and duration from Stop event JSON
-read -r message duration < <(printf '%s' "${input}" | node -e "
+IFS=$'\t' read -r message duration < <(printf '%s' "${input}" | node -e "
   let d = '';
   process.stdin.on('data', c => d += c);
   process.stdin.on('end', () => {
@@ -32,8 +32,8 @@ read -r message duration < <(printf '%s' "${input}" | node -e "
       const o = JSON.parse(d);
       const reason = o.stop_reason || 'done';
       const dur = Math.round((o.duration_ms || 0) / 1000);
-      process.stdout.write('Claude is ' + reason + ' ' + dur);
-    } catch { process.stdout.write('Claude finished 0'); }
+      process.stdout.write('Claude is ' + reason + '\t' + dur);
+    } catch { process.stdout.write('Claude finished\t0'); }
   });
 " 2>/dev/null) || { message="Claude finished"; duration=0; }
 
@@ -64,14 +64,8 @@ if [[ "${NOTIFY_ONLY_UNFOCUSED}" == true ]]; then
         fi
       fi
       ;;
-    MINGW*|MSYS*|CYGWIN*)
-      is_focused=$(powershell.exe -NoProfile -Command '
-        Add-Type -AssemblyName Microsoft.VisualBasic
-        $title = [Microsoft.VisualBasic.Interaction]::AppActivate([System.Diagnostics.Process]::GetCurrentProcess().Id)
-        Write-Output "false"
-      ' 2>/dev/null) || is_focused="false"
-      # Best-effort: Windows focus detection is unreliable from Git Bash
-      ;;
+    # Windows (MINGW/MSYS/CYGWIN): focus detection is not supported.
+    # Notifications will always be sent regardless of window focus.
   esac
 fi
 

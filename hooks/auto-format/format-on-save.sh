@@ -57,24 +57,24 @@ case "${ext}" in
     ;;
   php)
     if [[ -x ./vendor/bin/pint ]]; then
-      ./vendor/bin/pint "${safe_path}" 2>/dev/null || true
+      ./vendor/bin/pint -- "${safe_path}" 2>/dev/null || true
     elif command -v pint &>/dev/null; then
-      pint "${safe_path}" 2>/dev/null || true
+      pint -- "${safe_path}" 2>/dev/null || true
     fi
     ;;
   ex|exs)
     if command -v mix &>/dev/null; then
-      mix format "${safe_path}" 2>/dev/null || true
+      mix format -- "${safe_path}" 2>/dev/null || true
     fi
     ;;
   c|cpp|cc|cxx|h|hpp)
     if command -v clang-format &>/dev/null; then
-      clang-format -i "${safe_path}" 2>/dev/null || true
+      clang-format -i -- "${safe_path}" 2>/dev/null || true
     fi
     ;;
   dart)
     if command -v dart &>/dev/null; then
-      dart format "${safe_path}" 2>/dev/null || true
+      dart format -- "${safe_path}" 2>/dev/null || true
     fi
     ;;
   tf|tfvars)

@@ -1,6 +1,6 @@
 {
   "_scripts": ["notify.sh"],
-  "_description": "Desktop notification when Claude finishes a task or needs attention",
+  "_description": "Desktop notification when Claude finishes a turn",
   "hooks": {
     "Stop": [
       {

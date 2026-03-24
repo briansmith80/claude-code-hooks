@@ -40,7 +40,7 @@ claude-hooks --list                # see available packs
 ## How It Works
 
 1. Hook scripts are saved to `~/.claude-hooks/<pack>/`
-2. Hook configuration is merged into your project's `.claude/settings.json`
+2. Hook configuration is merged into `~/.claude/settings.json`
 3. Claude Code reads the hooks on startup and executes them at the right time
 
 Running the same pack twice is safe — duplicates are detected and skipped.
